@@ -1,53 +1,9 @@
-# Split audio according to information in srt-file.
+### 歌曲干声自动标注（Opencpop格式）
 
-To be able to train the speech-recognition engine <a href='https://github.com/mozilla/DeepSpeech'> DeepSpeech</a>, audio-files should not be longer than 10s.
-Therefore, this repo offers the possibility to easily split audio files based on the subtitle-info in srt-files and prepare corresponding transcript files.
+在新的词典和音素系统以及推理逻辑出来前，本项目致力于采用Opencpop原生词典，结合MFA的自动对齐功能和Praat脚本，完成跟Opencpop格式一致的自动标注。在有音频文件和对应抄本srt或者lyc文件的情况下，可以使用本项目的轮子进行标注以加快速度。项目中包含了训练好的MFA声学模型，Opencpop词典和Praat批量标注脚本。
 
+本人期待的歌曲标注工作流如下所示：带lyrics歌词的歌曲→lyrics转为带时间戳的srt文件→歌曲经过UVR处理(在线版的人声分离网站也可)→根据srt时间戳批量截取音频和对应歌词→储存为同名wav和txt→pypinyin将歌词txt转为不带声调的汉语音节→在txt中人工添加额外SP, AP, 转音标记→MFA自动对齐→根据MFA的textgrid自动生成midi层时长层和转音层标注→在Praat中自动按顺序打开wav和同名textgrid进行人工修正→更新midi层时长层和转音层的标注
 
-**Table of Contents**
+目前这个工作流已经基本实现，主要是五个轮子的配合，一个是根据srt时间戳批量截取音频和对应歌词 (我改的Github现成轮子)，一个是用pyinyin把歌词转为pinyin (这个很容易实现)，一个是转音符号-替换为韵母(主要是为了遵循Opencpop的标注格式)，一个是MFA批量标注(项目中已给出训练共300轮的声学模型和词典)，一个是自动生成midi标注和时长标注并按照人工修改更新 (基于Praat脚本实现)。
 
-- [Split audio according to information in srt-file.](#split-audio-according-to-information-in-srt-file)
-  - [Prerequisites](#prerequisites)
-  - [Walk-through](#walk-through)
-    - [Example Files](#example-files)
-    - [Modules](#modules)
-  - [About this project:](#about-this-project)
-
-
-## Prerequisites
-
-* [Python 3.6](https://www.python.org/)
-* [librosa](https://librosa.github.io/librosa/)
-* [SoundFile](https://pypi.org/project/SoundFile/)
-* [pydub](https://pypi.org/project/pydub/)
-* [moviepy](https://zulko.github.io/moviepy/)
-
-
-## Walk-through
-
-<b>This section will explain what the modules and script do in order to provide a deeper understanding of the individual steps and facilitate modification</b>
-
-<b>First:</b> Create a folder called "srt_files" where you store your srt_files and a folder "audio" where you store your audio-files (wmv or mp4).
-
-### Example Files
-
-<p> Check the folder Example Files to see how the information is extracted from an srt-file to a csv-file.</p>
-
-### Modules
-<p><b>- change_encoding: </b>The encoding of srt-files is changed from utf-8 to utf-8-sig.</p>
-<p><b>- convert_srt_to_csv: </b>Start time, end-time and subtitle are extracted from the srt-files and stored in a csv. In preparation for audio-splitting, a column id is generated from the filename with the addition of a unique number.</p>
-<p><b>- pre_process_audio: </b>Audio is processed to meet DeepSpeechs requirements of sample-rate 16kHz and bit-rate 16. I revised this part to 44.1KHz to meet the sampling rate of original songs.</p>
-<p><b>- split_files: </b>The audio files are splitted according to the start- and end-times in the csv files. The splitted audio-files are named after the id given in the transcripts.</p>
-<p><b>- create_DS_csv: </b>This module creates a csv with filepaths and filesizes of all processed audio files. </p>
-<p><b>- merge_csv: </b>Merge_csv joins all seperate csv-files.</p>
-<p><b>- merge_transcripts_and_wav_files: </b>This module matches the transcripts to the available audio files.</p>
-<p><b>- clean_unwanted_characters: </b>Unwanted characters are removed. After cleaning the transcripts, the text is extracted and saved in a txt file which can be used for training the language model.</p>
-
-<br>
-<p><b>Estimation on execution time: </b>full processing with all above modules took 1h 11m for an audio-dataset of 12GB.</p>
-
-## About this project:
-
-<p>This importer was created as part of the Master Thesis "Automatic Speech Recognition for Swiss German using Deep Neural Networks" for the degree Master of Business Innovation at the University of St. Gallen by Tobias Rordorf. In case of questions please feel free to contact me through <a href='https://www.linkedin.com/in/tobiasrordorf/'>LinkedIn</a>.
-
-Revised by Alexanda Jerry to make it suitable for auto-alignment of Mandarin Songs. The output of split wav files and transciptions would be sent to MFA forced alignment.
+最近可能得暂停更新段时间，我得去准备论文，后续会考虑在B站以录屏形式，更新下歌曲干声自动标注流程，当然我也很期待有整合式的全流程标注软件出现。Diffsinger的合成效果蛮不错，Openvpi项目组在丰富Diffsinger原项目上做出了很大跨越。我觉得用自己喜欢的歌手或者Vup合成自己想要的歌曲，是可期待在未来实现的事，只要我们不懈努力。我赶着把简陋版自动标注项目做出来，主要是因为目前还没有看到Diffsinger用在新的歌曲干声上，再加上新学期开始后很多ddl到来，所以做的确实有些着急，就当是抛砖引玉。
